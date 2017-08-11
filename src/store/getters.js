@@ -7,6 +7,8 @@ const getters = {
   sequenceList: state => state.sequenceList,
   mode: state => state.mode,
   currentIndex: state => state.currentIndex,
-  currentSong: state => state.playlist[state.currentIndex] || {}
+  currentSong: state => state.playlist[state.currentIndex] || {},
+  disc: state => state.disc,
+  topList: state => state.topList
 }
 export default getters
