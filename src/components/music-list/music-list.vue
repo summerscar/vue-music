@@ -35,8 +35,10 @@
   const transform = prefixStyle('transform')
   const backdrop = prefixStyle('backdrop-filter')
   import {mapActions} from 'vuex'
+  import {playlistMixin} from '@/common/js/mixin'
 
   export default {
+    mixins: [playlistMixin],
     props: {
       bgImg: {
         type: String,
@@ -71,6 +73,11 @@
       }
     },
     methods: {
+      handlePlaylist(playlist) {
+        const bottom = playlist.length > 0 ? '60px' : ''
+        this.$refs.list.$el.style.bottom = bottom
+        this.$refs.list.refresh()
+      },
       random() {
         this.randomPlay({list: this.songs})
       },
