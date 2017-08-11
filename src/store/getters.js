@@ -9,6 +9,7 @@ const getters = {
   currentIndex: state => state.currentIndex,
   currentSong: state => state.playlist[state.currentIndex] || {},
   disc: state => state.disc,
-  topList: state => state.topList
+  topList: state => state.topList,
+  searchHistory: state => state.searchHistory
 }
 export default getters
