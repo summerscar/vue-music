@@ -69,7 +69,7 @@
               <i @click="next" class="icon-next"></i>
             </div>
             <div class="icon i-right">
-              <i @click="toggleFavorite(currentSong)" class="icon"></i>
+              <i @click="toggleFavorite(currentSong)" class="icon" :class="getFavoriteIcon(currentSong)"></i>
             </div>
           </div>
         </div>
@@ -94,27 +94,29 @@
         </div>
       </div>
     </transition>
-   <!-- <playlist ref="playlist"></playlist>-->
+    <playlist ref="playlist"></playlist>
     <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime"
            @ended="end"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import {mapGetters, mapMutations} from 'vuex'
+  import {mapGetters, mapMutations, mapActions} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '@/common/js/dom'
   import ProgressBar from '@/base/progress-bar/progress-bar'
   import ProgressCircle from '@/base/progress-circle/progress-circle'
   import {playMode} from '@/common/js/config'
-  import {shuffle} from '@/common/js/util'
   import Lyric from 'lyric-parser'
   import Scroll from '@/base/scroll/scroll'
+  import Playlist from '@/components/playlist/playlist'
+  import {playerMixin} from '@/common/js/mixin'
 
   const transform = prefixStyle('transform')
   const transitionDuration = prefixStyle('transitionDuration')
 
   export default {
+    mixins: [playerMixin],
     data() {
       return {
         songReady: false,
@@ -161,6 +163,9 @@
     methods: {
       getLyric() {
         this.currentSong.getLyric().then((lyric) => {
+          if (this.currentSong.lyric !== lyric) {
+            return
+          }
           this.currentLyric = new Lyric(lyric, this.handleLyric)
           if (this.playing) {
             this.currentLyric.play()
@@ -181,18 +186,6 @@
         }
         this.playingLyric = txt
       },
-      changeMode() {
-        const mode = (this.mode + 1) % 3
-        this.setPlayMode(mode)
-        let list = null
-        if (mode === playMode.random) {
-          list = shuffle(this.sequenceList)
-        } else {
-          list = this.sequenceList
-        }
-        this.resetCurrentSong(list)
-        this.setPlayList(list)
-      },
       resetCurrentSong(list) {
         let index = list.findIndex((item) => {
           return item.id === this.currentSong.id
@@ -208,6 +201,9 @@
         if (this.currentLyric) {
           this.currentLyric.seek(currentTime * 1000)
         }
+      },
+      showPlaylist() {
+        this.$refs.playlist.show()
       },
       updateTime(e) {
         this.currentTime = e.target.currentTime
@@ -228,6 +224,7 @@
       },
       ready() {
         this.songReady = true
+        this.savePlayHistory(this.currentSong)
       },
       error() {
         this.songReady = true
@@ -311,6 +308,7 @@
         if (!this.songReady) { return }
         if (this.playlist.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex + 1
           if (index === this.playlist.length) {
@@ -327,6 +325,7 @@
         if (!this.songReady) { return }
         if (this.playlist.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex - 1
           if (index === -1) {
@@ -346,6 +345,9 @@
         setPlayMode: 'SET_PLAY_MODE',
         setPlayList: 'SET_PLAYLIST'
       }),
+      ...mapActions([
+        'savePlayHistory'
+      ]),
       middleTouchStart(e) {
         this.touch.initiated = true
         // 用来判断是否是一次移动
@@ -438,14 +440,15 @@
     components: {
       ProgressBar,
       ProgressCircle,
-      Scroll
+      Scroll,
+      Playlist
     }
   }
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
-  @import "~common/stylus/variable"
-  @import "~common/stylus/mixin"
+  @import "~@/common/stylus/variable"
+  @import "~@/common/stylus/mixin"
 
   .player
     .normal-player
